@@ -1,169 +1,170 @@
 let snakes = [];
-let gridSize = 30;
-let frameCountSinceLastSpawn = 0; // To prevent immediate spawns
-let fps = 40;
-let sphereFactor = .97;
+let gridSize = 27;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  frameRate(fps);
-  addSnake(); // Initially add one snake
+    createCanvas(windowWidth, windowHeight);
+    frameRate(30);
+    for (let i = 0; i < 4; i++) {
+        addSnake();
+    }
+
+    window.addEventListener('keydown', function(e) {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+            e.preventDefault();
+        }
+    }, false);
+
+    createOverlayContent(); // Call to create and style HTML content
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
 
 function draw() {
-  background(0);
-  // drawGrid();
-  drawPerspectiveGrid();
-  snakes.forEach((snake, index) => {
-    updateSnake(snake);
-    drawSnake(snake);
-  });
-}
+    background(0);
 
-function drawGrid() {
-  for (let x = 0; x <= width; x += gridSize) {
-    for (let y = 0; y <= height; y += gridSize) {
-      let d = dist(x, y, width / 2, height / 2); // Distance from center
-      let maxDist = dist(0, 0, width / 2, height / 2);
-      let sw = map(d, 0, maxDist, 4, 1); // Larger stroke weight closer to center
-      strokeWeight(sw);
-      stroke(80);
-      line(x, y, x + gridSize, y);
-      line(x, y, x, y + gridSize);
-    }
-  }
-}
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxDist = dist(0, 0, centerX, centerY);
 
-function drawPerspectiveGrid() {
-    let centerX = width / 2;
-    let centerY = height / 2;
-    let maxDist = dist(0, 0, centerX, centerY);
-  
     for (let x = 0; x <= width; x += gridSize) {
-      for (let y = 0; y <= height; y += gridSize) {
-        let d = dist(x, y, centerX, centerY);
-        let perspectiveFactor = map(d, 0, maxDist, 1, sphereFactor); // Adjust for desired effect
-        
-        // Calculate adjusted positions and sizes
-        let adjustedX = lerp(centerX, x, perspectiveFactor);
-        let adjustedY = lerp(centerY, y, perspectiveFactor);
-        let nextAdjustedX = lerp(centerX, x + gridSize, perspectiveFactor);
-        let nextAdjustedY = lerp(centerY, y + gridSize, perspectiveFactor);
-  
-        // Adjust stroke weight and color based on distance
-        strokeWeight(map(d, 0, maxDist, 2, 0.5));
-        stroke(255, map(d, 0, maxDist, 255, 50)); // Darker and more transparent with distance
-  
-        line(adjustedX, adjustedY, nextAdjustedX, adjustedY); // Top edge
-        line(adjustedX, adjustedY, adjustedX, nextAdjustedY); // Left edge
-      }
+        for (let y = 0; y <= height; y += gridSize) {
+            let d = dist(x, y, centerX, centerY);
+            let normD = d / maxDist;
+
+            let sw = map(normD, 0, 1, 2, 0.5);
+            strokeWeight(sw);
+
+            let c = lerpColor(color(80), color(128, 0, 128), map(normD, 0, 1, 0, 0.2));
+            stroke(c);
+
+            let adjustX = map(normD, 0, 1, 0, (centerX - x) * 0.05);
+            let adjustY = map(normD, 0, 1, 0, (centerY - y) * 0.05);
+
+            fill(0, 0); // Transparent fill
+            rect(x + adjustX, y + adjustY, gridSize, gridSize);
+        }
     }
-}  
+
+    snakes.forEach(updateSnake);
+    snakes.forEach(drawSnake);
+}
 
 function addSnake() {
-  let snakeLength = 10; // Length in edges
-  let snake = {
-    body: [],
-    direction: 'right',
-    nextDirection: 'right',
-    length: snakeLength
-  };
+    let snakeLength = floor(random(3, 12));
+    const directions = ['right', 'down', 'left', 'up'];
+    let direction = random(directions);
 
-  // Starting position in the middle of the canvas
-  let startX = round(width / 2 / gridSize) * gridSize;
-  let startY = round(height / 2 / gridSize) * gridSize;
+    let cols = floor(width / gridSize);
+    let rows = floor(height / gridSize);
+    let startX = floor(random(cols)) * gridSize;
+    let startY = floor(random(rows)) * gridSize;
 
-  // Populate initial snake body
-  for (let i = 0; i < snakeLength; i++) {
-    snake.body.push({x: startX - i * gridSize, y: startY});
-  }
+    let snake = {
+        body: [],
+        direction: direction,
+        directionChangeCooldown: 0,
+        changeProbability: 0.05
+    };
 
-  snakes.push(snake);
+    for (let i = 0; i < snakeLength; i++) {
+        snake.body.push({ x: startX - i * gridSize, y: startY });
+    }
+
+    snakes.push(snake);
 }
 
 function updateSnake(snake) {
+    if (snake.directionChangeCooldown <= 0 && random(1) < snake.changeProbability) {
+        changeDirectionRandomly(snake);
+        snake.directionChangeCooldown = floor(random(20, 60));
+    } else if (snake.directionChangeCooldown > 0) {
+        snake.directionChangeCooldown--;
+    }
+
     let head = snake.body[0];
-    snake.direction = snake.nextDirection;
-  
-    // Use getDirectionOffset to simplify direction handling
-    let offset = getDirectionOffset(snake.direction);
-    let newHead = { x: (head.x + offset.x + width) % width, y: (head.y + offset.y + height) % height };
-  
-    // Add new head and remove the last segment to maintain length
+    let newHead = { x: head.x, y: head.y };
+
+    switch (snake.direction) {
+        case 'right':
+            newHead.x += gridSize;
+            break;
+        case 'down':
+            newHead.y += gridSize;
+            break;
+        case 'left':
+            newHead.x -= gridSize;
+            break;
+        case 'up':
+            newHead.y -= gridSize;
+            break;
+    }
+
+    adjustForGridWrapping(newHead);
+    snake.body.pop();
     snake.body.unshift(newHead);
-    if (snake.body.length > snake.length) snake.body.pop();
-}  
+}
+
+function changeDirectionRandomly(snake) {
+    const directions = ['right', 'down', 'left', 'up'];
+    let newDirection = directions[(directions.indexOf(snake.direction) + floor(random(1, directions.length))) % directions.length];
+    snake.direction = newDirection;
+}
+
+function adjustForGridWrapping(newHead) {
+    if (newHead.x >= width) newHead.x = 0;
+    if (newHead.y >= height) newHead.y = 0;
+    if (newHead.x < 0) newHead.x = width - gridSize;
+    if (newHead.y < 0) newHead.y = height - gridSize;
+}
 
 function drawSnake(snake) {
-    // Pre-calculate values to be used in loop to improve performance
-    const totalLength = snake.body.length - 1;
-    for (let i = 0; i < totalLength; i++) {
-      let part = snake.body[i];
-      let nextPart = snake.body[i + 1];
-  
-      // Calculate opacity outside the conditional to simplify the drawing command
-      let opacity = map(i, 0, totalLength, 255, 50);
-      stroke(160, 32, 240, opacity);
-      strokeWeight(3);
-  
-      // Draw line if parts are adjacent (considering grid wrapping)
-      if (arePartsAdjacent(part, nextPart)) {
-        line(part.x, part.y, nextPart.x, nextPart.y);
-      }
-    }
-}
-  
-function arePartsAdjacent(part, nextPart) {
-    // Check if parts are adjacent, considering wrapping
-    return abs(part.x - nextPart.x) < gridSize * 1.5 && abs(part.y - nextPart.y) < gridSize * 1.5;
-}
-  
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxDist = dist(0, 0, centerX, centerY);
 
-function getDirectionOffset(direction) {
-    const offsets = {
-      'right': {x: gridSize, y: 0},
-      'down': {x: 0, y: gridSize},
-      'left': {x: -gridSize, y: 0},
-      'up': {x: 0, y: -gridSize}
-    };
-    return offsets[direction] || {x: 0, y: 0};
-}  
+    snake.body.forEach((part, index) => {
+        if (index < snake.body.length - 1) {
+            let nextPart = snake.body[index + 1];
+
+            let d = dist(part.x, part.y, centerX, centerY);
+            let normD = d / maxDist;
+
+            let adjustX = map(normD, 0, 1, 0, (centerX - part.x) * 0.05);
+            let adjustY = map(normD, 0, 1, 0, (centerY - part.y) * 0.05);
+
+            let adjustedStartX = part.x + adjustX;
+            let adjustedStartY = part.y + adjustY;
+            let adjustedEndX = nextPart.x + adjustX;
+            let adjustedEndY = nextPart.y + adjustY;
+
+            let opacity = map(normD, 0, 1, 255, 50);
+            stroke(160, 32, 240, opacity);
+            strokeWeight(2);
+
+            line(adjustedStartX, adjustedStartY, adjustedEndX, adjustedEndY);
+        }
+    });
+}
 
 function keyPressed() {
-    // Direct control for the first snake
-    if (snakes.length > 0) {
-      let snake = snakes[0];
-      if (keyCode === RIGHT_ARROW && snake.direction !== 'left') snake.nextDirection = 'right';
-      if (keyCode === DOWN_ARROW && snake.direction !== 'up') snake.nextDirection = 'down';
-      if (keyCode === LEFT_ARROW && snake.direction !== 'right') snake.nextDirection = 'left';
-      if (keyCode === UP_ARROW && snake.direction !== 'down') snake.nextDirection = 'up';
+    if (keyCode === 32) {
+        addSnake();
+    } else {
+        snakes.forEach(snake => {
+            if (keyCode === LEFT_ARROW) {
+                snake.direction = rotateDirection(snake.direction, false);
+            } else if (keyCode === RIGHT_ARROW) {
+                snake.direction = rotateDirection(snake.direction, true);
+            }
+        });
     }
-  
-    // Tank controls for the rest of the snakes
-    for (let i = 1; i < snakes.length; i++) {
-      let snake = snakes[i];
-      if (keyCode === 32) { // Space bar for a new snake, handled globally
-        continue; // Skip to the next iteration to avoid affecting direction logic
-      } else {
-        // Rotate the snake based on its current direction
-        rotateSnake(snake, keyCode);
-      }
-    }
-  
-    if (keyCode === 32 && frameCount - frameCountSinceLastSpawn > 10) { // Space bar
-      addSnake();
-      frameCountSinceLastSpawn = frameCount;
-    }
-  }
-  
-  function rotateSnake(snake, key) {
+}
+
+function rotateDirection(currentDirection, clockwise) {
     const directions = ['right', 'down', 'left', 'up'];
-    let currentDirectionIndex = directions.indexOf(snake.direction);
-    if (key === RIGHT_ARROW) {
-      // Rotate right
-      snake.nextDirection = directions[(currentDirectionIndex + 1) % directions.length];
-    } else if (key === LEFT_ARROW) {
-      // Rotate left
-      snake.nextDirection = directions[(currentDirectionIndex - 1 + directions.length) % directions.length];
-    }
+    let index = directions.indexOf(currentDirection);
+    index = clockwise ? (index + 1) % directions.length : (index + directions.length - 1) % directions.length;
+    return directions[index];
 }

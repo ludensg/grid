@@ -2,112 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Daniel</title>
+    <title>Daniel Gandelman</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
+
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* This prevents the scrollbars from appearing */
+            overflow: hidden; /* Hide scrollbars */
         }
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 20px;
-            background-color: #333;
-            color: #fff;
-        }
-
-        header h1 {
-            margin: 0;
-        }
-
-        .content-container {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            max-width: 80%;
-        }
-
-        .artwork {
-            width: 50%;
-            position: relative;
-        }
-
-        .artwork img {
-            max-width: 100%;
-            display: block;
-        }
-
-        .artwork::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.5); /* 50% opacity white square */
-            z-index: -1;
-        }
-
-        .description {
-            flex-grow: 1;
-        }
-
-        .description p {
-            font-size: 18px;
-            line-height: 1.5;
-        }
-
-        #background {
+        canvas {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f0f0f0; /* Set your desired background color or image */
-            z-index: -1; /* Make sure it's behind everything */
+            z-index: 0;
         }
-
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="background"></div>
     <script src="sketch.js"></script>
-    <header>
-        <h1>Your Art Portfolio</h1>
-        <nav>
-            <a href="#">Home</a>
-            <a href="#">Portfolio</a>
-            <a href="#">About</a>
-            <a href="#">Contact</a>
-        </nav>
-    </header>
-    <div class="content-container">
-        <div class="artwork">
-            <img src="placeholder.jpg" alt="Artwork Placeholder">
-        </div>
-        <div class="description">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor erat in enim sollicitudin, vel bibendum odio mattis. Sed consectetur libero et dolor eleifend, id faucibus sapien iaculis.</p>
-        </div>
-    </div>
+    <script src="main.js"></script>
 </body>
 </html>
