@@ -108,6 +108,7 @@ function addSnake() {
 
   let snakeLength = Math.floor(Math.random() * (40 - 8 + 1)) + 8; // Length in edges
   let generalOpacity = Math.floor(Math.random() * (255 - 50 + 1)) + 50;
+  let snakePath = Math.random() * Math.random();
   let snake = {
     body: [],
     direction: directions[directionIndex],
@@ -116,6 +117,7 @@ function addSnake() {
     opacity: generalOpacity,
     isControlled: false,
     controlTimeLeft: 0, // Time left in controlled movement mode
+    pathRandomness: snakePath,
   };
 
   // Randomize starting position within the canvas
@@ -172,7 +174,7 @@ function updateSnakeDirection(snake) {
 
   // Decide randomly if the direction should change
   // This is a simplistic approach; consider more complex conditions for fun behaviors
-  if (Math.random() < 0.3) { // 30% chance to change direction
+  if (Math.random() < snake.pathRandomness) { // 30% chance to change direction
     let possibleDirections = ['right', 'down', 'left', 'up'];
     let currentIndex = possibleDirections.indexOf(snake.direction);
     let nextIndex = (currentIndex + Math.floor(Math.random() * 2) + 1) % 4; // Avoid the immediate reversal
